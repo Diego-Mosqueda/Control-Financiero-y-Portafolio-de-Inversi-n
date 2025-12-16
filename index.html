@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Financiero y Portafolio de Inversión</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- MODAL DE AUTENTICACIÓN -->
+    <div id="authModal" class="modal active">
+        <div class="modal-content auth-container">
+            <div class="auth-header">
+                <h1>💰 Libertad Financiera</h1>
+                <p>Gestiona tus inversiones y alcanza tus metas financieras</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" data-tab="login">Iniciar Sesión</button>
+                <button class="auth-tab-btn" data-tab="register">Registrarse</button>
+            </div>
+
+            <!-- TAB LOGIN -->
+            <div id="login-tab" class="auth-tab-content active">
+                <form id="loginForm" class="auth-form">
+                    <div class="form-group">
+                        <label for="loginEmail">Email:</label>
+                        <input type="email" id="loginEmail" required placeholder="correo@ejemplo.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Contraseña:</label>
+                        <input type="password" id="loginPassword" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Inicia Sesión</button>
+                </form>
+                <p class="demo-login">Demo: email: demo@test.com | contraseña: demo123</p>
+            </div>
+
+            <!-- TAB REGISTRO -->
+            <div id="register-tab" class="auth-tab-content">
+                <form id="registerForm" class="auth-form">
+                    <div class="form-group">
+                        <label for="registerName">Nombre Completo:</label>
+                        <input type="text" id="registerName" required placeholder="Tu nombre">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email:</label>
+                        <input type="email" id="registerEmail" required placeholder="correo@ejemplo.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Contraseña (mínimo 6 caracteres):</label>
+                        <input type="password" id="registerPassword" required minlength="6" placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerConfirm">Confirmar Contraseña:</label>
+                        <input type="password" id="registerConfirm" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Crear Cuenta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL -->
+    <div id="appContainer" class="app-container" style="display: none;">
+        <!-- NAVBAR -->
+        <nav class="navbar">
+            <div class="navbar-content">
+                <h1 class="navbar-title">💰 Libertad Financiera</h1>
+                <div class="navbar-links">
+                    <button class="nav-btn active" data-module="dashboard">Dashboard</button>
+                    <button class="nav-btn" data-module="expenses">Gastos</button>
+                    <button class="nav-btn" data-module="health">Salud Financiera</button>
+                    <button class="nav-btn" data-module="portfolio">Portafolio</button>
+                </div>
+                <div class="navbar-user">
+                    <span id="userDisplayName" class="user-name"></span>
+                    <button id="logoutBtn" class="btn btn-secondary btn-sm">Cerrar Sesión</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- ======== DASHBOARD ======== -->
+            <section id="dashboard" class="module-section active">
+                <div class="container">
+                    <h2 class="section-title">Dashboard - Panel Principal</h2>
+                    
+                    <div class="dashboard-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-icon">💵</div>
+                            <div class="kpi-content">
+                                <p class="kpi-label">Ingresos Mensuales</p>
+                                <p class="kpi-value" id="dashIncome">$0.00</p>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-icon">📊</div>
+                            <div class="kpi-content">
+                                <p class="kpi-label">Gastos Totales</p>
+                                <p class="kpi-value" id="dashExpenses">$0.00</p>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-icon">🎯</div>
+                            <div class="kpi-content">
+                                <p class="kpi-label">Saldo Disponible</p>
+                                <p class="kpi-value" id="dashBalance">$0.00</p>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-icon">📈</div>
+                            <div class="kpi-content">
+                                <p class="kpi-label">Ratio de Ahorro</p>
+                                <p class="kpi-value" id="dashSavingsRate">0%</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-grid">
+                        <div class="chart-container">
+                            <h3>Distribución de Gastos</h3>
+                            <canvas id="expensesChart"></canvas>
+                        </div>
+
+                        <div class="chart-container">
+                            <h3>Evolución Mensual</h3>
+                            <canvas id="evolutionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="quick-actions">
+                        <button class="btn btn-primary" onclick="scrollToModule('expenses')">Registrar Gasto</button>
+                        <button class="btn btn-accent" onclick="scrollToModule('portfolio')">Ver Portafolio</button>
+                        <button class="btn btn-success" onclick="scrollToModule('health')">Análisis de Salud</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======== GASTOS ======== -->
+            <section id="expenses" class="module-section">
+                <div class="container">
+                    <h2 class="section-title">Gestión de Gastos</h2>
+
+                    <div class="card form-card">
+                        <h3>Registrar Nuevo Gasto</h3>
+                        <form id="expenseForm" class="form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="expenseDateInput">Fecha:</label>
+                                    <input type="date" id="expenseDateInput" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="expenseAmountInput">Monto (USD):</label>
+                                    <input type="number" id="expenseAmountInput" step="0.01" min="0" required placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="expenseDescriptionInput">Descripción:</label>
+                                    <input type="text" id="expenseDescriptionInput" required placeholder="Ej: Gasolina, Almuerzo, etc.">
+                                </div>
+                                <div class="form-group">
+                                    <label for="expenseCategoryInput">Categoría:</label>
+                                    <select id="expenseCategoryInput">
+                                        <option value="">Categoría (Auto)</option>
+                                        <option value="Vivienda">🏠 Vivienda</option>
+                                        <option value="Transporte">🚗 Transporte</option>
+                                        <option value="Alimentación">🍽️ Alimentación</option>
+                                        <option value="Entretenimiento">🎬 Entretenimiento</option>
+                                        <option value="Servicios">💡 Servicios</option>
+                                        <option value="Salud">⚕️ Salud</option>
+                                        <option value="Educación">📚 Educación</option>
+                                        <option value="Otros">📦 Otros</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">Registrar Gasto</button>
+                        </form>
+                    </div>
+
+                    <div class="filters-section">
+                        <h3>Filtrar Gastos</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="filterMonth">Mes:</label>
+                                <input type="month" id="filterMonth">
+                            </div>
+                            <div class="form-group">
+                                <label for="filterCategory">Categoría:</label>
+                                <select id="filterCategory">
+                                    <option value="">Todas las categorías</option>
+                                    <option value="Vivienda">Vivienda</option>
+                                    <option value="Transporte">Transporte</option>
+                                    <option value="Alimentación">Alimentación</option>
+                                    <option value="Entretenimiento">Entretenimiento</option>
+                                    <option value="Servicios">Servicios</option>
+                                    <option value="Salud">Salud</option>
+                                    <option value="Educación">Educación</option>
+                                    <option value="Otros">Otros</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Historial de Gastos</h3>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Categoría</th>
+                                        <th>Descripción</th>
+                                        <th>Monto</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expensesTableBody">
+                                    <tr class="empty-state">
+                                        <td colspan="5">Sin gastos registrados</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="summary-section">
+                            <h4>Resumen por Categoría</h4>
+                            <div id="categorySummary" class="category-summary">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======== SALUD FINANCIERA ======== -->
+            <section id="health" class="module-section">
+                <div class="container">
+                    <h2 class="section-title">Salud Financiera</h2>
+
+                    <div class="card form-card">
+                        <h3>Información Financiera Personal</h3>
+                        <form id="healthDataForm" class="form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="monthlyIncome">Ingreso Mensual (USD):</label>
+                                    <input type="number" id="monthlyIncome" step="0.01" min="0" required placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="totalDebt">Deuda Total (USD):</label>
+                                    <input type="number" id="totalDebt" step="0.01" min="0" required placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="emergencyFund">Fondo de Emergencia (USD):</label>
+                                    <input type="number" id="emergencyFund" step="0.01" min="0" required placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">Actualizar Información</button>
+                        </form>
+                    </div>
+
+                    <div class="indicators-grid">
+                        <div class="indicator-card indicator-good">
+                            <div class="indicator-number" id="healthIndicator1">0%</div>
+                            <p class="indicator-label">Ratio de Ahorro</p>
+                            <p class="indicator-description">Ideal: > 20%</p>
+                        </div>
+
+                        <div class="indicator-card indicator-good">
+                            <div class="indicator-number" id="healthIndicator2">0%</div>
+                            <p class="indicator-label">Ratio Deuda/Ingresos</p>
+                            <p class="indicator-description">Ideal: < 36%</p>
+                        </div>
+
+                        <div class="indicator-card indicator-good">
+                            <div class="indicator-number" id="healthIndicator3">0 meses</div>
+                            <p class="indicator-label">Fondo de Emergencia</p>
+                            <p class="indicator-description">Ideal: 6 meses</p>
+                        </div>
+
+                        <div class="indicator-card indicator-good">
+                            <div class="indicator-number" id="healthIndicator4">0 meses</div>
+                            <p class="indicator-label">Tiempo para Pagar Deuda</p>
+                            <p class="indicator-description">Meses estimados</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Análisis Detallado de Salud Financiera</h3>
+                        <div id="healthAnalysis" class="health-analysis">
+                            <p class="placeholder-text">Completa la información personal para ver el análisis detallado.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Recomendaciones Personalizadas</h3>
+                        <div id="healthRecommendations" class="recommendations-list">
+                            <p class="placeholder-text">Las recomendaciones aparecerán aquí.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======== PORTAFOLIO DE INVERSIÓN ======== -->
+            <section id="portfolio" class="module-section">
+                <div class="container">
+                    <h2 class="section-title">Portafolio de Inversión</h2>
+
+                    <div class="card form-card">
+                        <h3>Selecciona Tu Perfil de Riesgo</h3>
+                        <p class="form-description">Elige el perfil que mejor se adapte a tu situación financiera y tolerancia al riesgo.</p>
+                        
+                        <div class="quick-profiles">
+                            <button type="button" class="profile-btn" onclick="selectProfile('conservador')">
+                                <span class="profile-icon">🛡️</span>
+                                <span>Conservador</span>
+                                <span class="profile-desc">60% Fijo / 40% Variable</span>
+                            </button>
+                            <button type="button" class="profile-btn" onclick="selectProfile('moderado')">
+                                <span class="profile-icon">⚖️</span>
+                                <span>Moderado</span>
+                                <span class="profile-desc">50% Fijo / 50% Variable</span>
+                            </button>
+                            <button type="button" class="profile-btn" onclick="selectProfile('agresivo')">
+                                <span class="profile-icon">🚀</span>
+                                <span>Agresivo</span>
+                                <span class="profile-desc">30% Fijo / 70% Variable</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="riskProfileResult" style="display: none;">
+                        <div class="card profile-result-card">
+                            <h3>Tu Perfil de Riesgo: <span id="profileName" class="profile-badge"></span></h3>
+                            <p id="profileDescription" class="profile-description"></p>
+                            
+                            <div class="profile-allocation">
+                                <h4>Asignación Recomendada:</h4>
+                                <div class="allocation-bars">
+                                    <div class="allocation-item">
+                                        <div class="allocation-label">
+                                            <span>Renta Fija (Bonos, Depósitos)</span>
+                                            <span id="fixedIncome-percent" class="allocation-percent">0%</span>
+                                        </div>
+                                        <div class="allocation-bar">
+                                            <div class="allocation-fill fixed-income" id="fixedIncomeBar"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="allocation-item">
+                                        <div class="allocation-label">
+                                            <span>Renta Variable (Acciones, ETFs)</span>
+                                            <span id="equity-percent" class="allocation-percent">0%</span>
+                                        </div>
+                                        <div class="allocation-bar">
+                                            <div class="allocation-fill equity" id="equityBar"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card form-card">
+                        <h3>Configurar Mi Portafolio</h3>
+                        <p class="form-description">Personaliza tu asignación de activos basado en tu perfil de riesgo.</p>
+                        
+                        <form id="portfolioForm" class="form">
+                            <h4>Monto Total a Invertir (USD):</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <input type="number" id="portfolioAmount" step="0.01" min="0" required placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <h4>Distribución de Activos</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="fixedIncomePercent">Renta Fija (%):</label>
+                                    <input type="number" id="fixedIncomePercent" min="0" max="100" step="1" value="50" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="equityPercent">Renta Variable (%):</label>
+                                    <input type="number" id="equityPercent" min="0" max="100" step="1" value="50" required>
+                                </div>
+                            </div>
+
+                            <div class="allocation-preview">
+                                <p>Renta Fija: <span id="previewFixed">$0.00</span></p>
+                                <p>Renta Variable: <span id="previewEquity">$0.00</span></p>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">Guardar Portafolio</button>
+                        </form>
+                    </div>
+
+                    <div id="portfolioDetails" style="display: none;">
+                        <div class="card">
+                            <h3>Tu Portafolio Actual</h3>
+                            
+                            <div class="portfolio-summary">
+                                <div class="summary-item">
+                                    <span class="summary-label">Monto Total Invertido:</span>
+                                    <span class="summary-value" id="portfolioTotalAmount">$0.00</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Rentabilidad Esperada Anual:</span>
+                                    <span class="summary-value" id="expectedReturn">0%</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Riesgo Potencial:</span>
+                                    <span class="summary-value" id="potentialRisk">Bajo</span>
+                                </div>
+                            </div>
+
+                            <div class="chart-container">
+                                <h4>Distribución del Portafolio</h4>
+                                <canvas id="portfolioChart"></canvas>
+                            </div>
+
+                            <div class="assets-table">
+                                <h4>Composición de Activos</h4>
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tipo de Activo</th>
+                                            <th>Porcentaje</th>
+                                            <th>Monto Invertido</th>
+                                            <th>Rentabilidad Esperada</th>
+                                            <th>Riesgo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="assetsTableBody">
+                                        <tr class="empty-state">
+                                            <td colspan="5">No hay portafolio configurado</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Comparativa de Rendimiento Esperado por Perfil</h3>
+
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Perfil</th>
+                                        <th>Renta Fija</th>
+                                        <th>Renta Variable</th>
+                                        <th>Rentabilidad Esperada</th>
+                                        <th>Volatilidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Conservador</strong></td>
+                                        <td>60%</td>
+                                        <td>40%</td>
+                                        <td>4.5% - 5.5%</td>
+                                        <td>🟢 Baja</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Moderado</strong></td>
+                                        <td>50%</td>
+                                        <td>50%</td>
+                                        <td>6.5% - 7.5%</td>
+                                        <td>🟡 Media</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Agresivo</strong></td>
+                                        <td>30%</td>
+                                        <td>70%</td>
+                                        <td>8.5% - 10%</td>
+                                        <td>🔴 Alta</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="card">
+                            <h3>Alertas y Recomendaciones</h3>
+                            <div id="portfolioAlerts" class="alerts-list">
+                                <p class="placeholder-text">Las alertas aparecerán aquí cuando sea necesario.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 Control Financiero y Portafolio de Inversión. Todas tus decisiones financieras importan.</p>
+            <p class="disclaimer">Esta aplicación proporciona información educativa. Consulta con un asesor financiero antes de tomar decisiones de inversión.</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
